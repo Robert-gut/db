@@ -25,16 +25,16 @@ class authController {
                 return res.status(400).json({message: 'Помилка реєстрації.', errors})
             }
             // condidate
-            const {username, password} = req.body
-            const condidate = await User.findOne({username})
+            const {firstName, lastName, email, password, confirmPassword, sex, phone} = req.body
+            const condidate = await User.findOne({email})
             if(condidate){
-                return res.status(400).json({message: 'Користувач з таким іменем уже існує.'})
+                return res.status(400).json({message: 'Користувач з таким email уже існує.'})
             }
             // hashPassword
             const hashPassword = bcrypt.hashSync(password, 8);
-            const userRole = await Role.findOne({value: 'ADMINISTRATOR'})
+            const userRole = await Role.findOne({value: 'USER'})
             // save user
-            const user = new User({username, password: hashPassword, roles: [userRole.value]})
+            const user = new User({firstName, lastName, email, password: hashPassword, sex, phone, roles: [userRole.value]})
             await user.save()
             return res.json({message: 'Користувач успішно зареєстрований.'})
         } catch (error) {
