@@ -1,3 +1,5 @@
 module.exports = {
-    secret: 'TOP_SECRET_KEY'
+    jwt_access_secret: 'TOP_SECRET_ACCESS_KEY',
+    jwt_refresh_secret: 'TOP_SECRET_REFRESH_KEY',
+    hash_password: 8
 }

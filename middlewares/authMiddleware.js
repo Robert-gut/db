@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const { secret } = require('../config')
+const { jwt_access_secret } = require('../config')
 
 // Міддлвар - це функція, яка обробляє запити, перш ніж вони досягнуть обробника маршруту (route handler) або іншого міддлвару.
 module.exports = function (req, res, next){
@@ -14,7 +14,7 @@ module.exports = function (req, res, next){
       return res.status(401).json({message: 'Користувач не авторизований'})  
     }
     //декудуємо токена
-    const decodedData = jwt.verify(token, secret);
+    const decodedData = jwt.verify(token, jwt_access_secret);
     req.user = decodedData
     next()
 

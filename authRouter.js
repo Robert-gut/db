@@ -19,5 +19,7 @@ router.post('/registration',
 router.post('/login', controller.login)
 router.get('/users', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.getUsers)
 router.delete('/deleteUser/:id', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.deleteUser)
+router.post('/refresh', controller.refresh)
+router.post('/logout', controller.deleteUser)
 
 module.exports = router

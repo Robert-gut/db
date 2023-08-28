@@ -1,13 +1,14 @@
 const User = require('./modules/User')
 const Role = require('./modules/Role')
+const Token = require('./modules/Token')
 const bcrypt = require('bcrypt');
 
 const { validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken')
-const { secret } = require('./config')
+const { hash_password, jwt_access_secret, jwt_refresh_secret } = require('./config')
 
 
-const generateAccessToken = (id, firstName, lastName, email, sex, phone, roles) =>{
+const generateAccessAndRefreshToken = (id, firstName, lastName, email, sex, phone, roles) =>{
     const payload = {
         id,
         firstName,
@@ -17,7 +18,12 @@ const generateAccessToken = (id, firstName, lastName, email, sex, phone, roles) 
         phone,
         roles
     }
-    return jwt.sign(payload, secret, { expiresIn: '1h' })
+    const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '1h' })
+    const refreshToken = jwt.sign(payload, jwt_refresh_secret, { expiresIn: '3d' })
+    return {
+        accessToken,
+        refreshToken
+    }
 }
 
 class authController {
@@ -39,7 +45,7 @@ class authController {
               return res.status(400).json({message: 'Паролі не співпадають(поле:password і confirmPassword)'})
             }
             // hashPassword
-            const hashPassword = bcrypt.hashSync(password, 8);
+            const hashPassword = bcrypt.hashSync(password, hash_password);
             const userRole = await Role.findOne({value: 'USER'})
             // save user
             const user = new User({firstName, lastName, email, password: hashPassword, sex, phone, roles: [userRole.value]})
@@ -65,9 +71,10 @@ class authController {
                 return res.status(400).json({message: 'Невірний пароль'})
             }
             // create jwt
-            const token = generateAccessToken(user._id, user.firstName, user.lastName, user.email , user.sex, user.phone, user.roles)
-            console.log(token);
-            return res.json({token})
+            const {accessToken, refreshToken} = generateAccessAndRefreshToken(user._id, user.firstName, user.lastName, user.email , user.sex, user.phone, user.roles)
+            const refresh = new Token({user: user._id, refreshToken})
+            refresh.save()
+            return res.json({accessToken, refreshToken})
 
         } catch (error) {
             console.log(error); 
@@ -88,7 +95,6 @@ class authController {
         try {
             const { id } = req.params; // Припускаючи, що ідентифікатор користувача передається у параметрі URL
             const deletedUser = await User.findByIdAndDelete(id);
-            console.log(deletedUser);
             if (!deletedUser) {
                 return res.status(400).json({ message: 'Користувача не знайдено' });
             }
@@ -99,6 +105,39 @@ class authController {
             return res.status(400).json({ message: 'Delete user error' });
         }
       }
+
+      async refresh(req, res) {
+        try {
+            const { refreshToken } = req.body; 
+            const existiogToken = await Token.findOne({refreshToken})
+            if (!existiogToken) {
+                return res.status(401).json({message: 'Невірний або недійсний рефреш токен.'})
+            }
+
+            const decodedPayload = jwt.verify(refreshToken, jwt_refresh_secret)
+
+            const {accessToken, refreshToken: newRefreshToken} =  generateAccessAndRefreshToken(
+                decodedPayload.id,
+                decodedPayload.firstName,
+                decodedPayload.lastName,
+                decodedPayload.email,
+                decodedPayload.sex,
+                decodedPayload.phone,
+                decodedPayload.roles
+            )
+
+            
+            existiogToken.refreshToken = newRefreshToken
+            await existiogToken.save()
+
+            return res.json({ accessToken, refreshToken: newRefreshToken });
+        } catch (error) {
+            console.error(error);
+            return res.status(400).json({ message: 'Update token error' });
+        }
+      }
+
+
     }
 
     
