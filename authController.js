@@ -7,10 +7,14 @@ const jwt = require('jsonwebtoken')
 const { secret } = require('./config')
 
 
-const generateAccessToken = (id, username, roles) =>{
+const generateAccessToken = (id, firstName, lastName, email, sex, phone, roles) =>{
     const payload = {
         id,
-        username,
+        firstName,
+        lastName,
+        email,
+        sex,
+        phone,
         roles
     }
     return jwt.sign(payload, secret, { expiresIn: '1h' })
@@ -30,6 +34,10 @@ class authController {
             if(condidate){
                 return res.status(400).json({message: 'Користувач з таким email уже існує.'})
             }
+            // check password and confirmPassword
+            if(password !== confirmPassword){
+              return res.status(400).json({message: 'Паролі не співпадають(поле:password і confirmPassword)'})
+            }
             // hashPassword
             const hashPassword = bcrypt.hashSync(password, 8);
             const userRole = await Role.findOne({value: 'USER'})
@@ -45,11 +53,11 @@ class authController {
 
     async login (req, res){
         try {
-            const {username, password} = req.body
+            const {email, password} = req.body
             // find user
-            const user = await User.findOne({username})
+            const user = await User.findOne({email})
             if(!user){
-                return res.status(400).json({message: `Користувача ${username} не існує.`})
+                return res.status(400).json({message: `Користувача з таким email: ${email} не існує.`})
             }
             // check password
             const validPassword = bcrypt.compareSync(password, user.password)
@@ -57,7 +65,7 @@ class authController {
                 return res.status(400).json({message: 'Невірний пароль'})
             }
             // create jwt
-            const token = generateAccessToken(user._id, user.username, user.roles)
+            const token = generateAccessToken(user._id, user.firstName, user.lastName, user.email , user.sex, user.phone, user.roles)
             console.log(token);
             return res.json({token})
 
@@ -69,16 +77,37 @@ class authController {
 
     async getUsers (req, res){
         try {
-            // const userRole = new Role()
-            // const adminRole = new Role({value: 'ADMINISTRATOR'})
-            // await userRole.save()
-            // await adminRole.save()
-
-            res.json('server work')
+          const users = await User.find()
+          res.json(users)
         } catch (error) {
-            console.log(error); 
+          console.log(error); 
         }
-    }
-}
+      }
 
-module.exports = new authController()
+      async deleteUser(req, res) {
+        try {
+            const { id } = req.params; // Припускаючи, що ідентифікатор користувача передається у параметрі URL
+            const deletedUser = await User.findByIdAndDelete(id);
+            console.log(deletedUser);
+            if (!deletedUser) {
+                return res.status(400).json({ message: 'Користувача не знайдено' });
+            }
+            
+            return res.json({ message: 'Користувача успішно видалено', deletedUser });
+        } catch (error) {
+            console.error(error);
+            return res.status(400).json({ message: 'Delete user error' });
+        }
+      }
+    }
+
+    
+    
+    module.exports = new authController()
+
+
+
+    // const userRole = new Role()
+    // const adminRole = new Role({value: 'ADMINISTRATOR'})
+    // await userRole.save()
+    // await adminRole.save()

@@ -3,6 +3,8 @@ const router = new Router()
 const controller = require('./authController')
 const {check} = require('express-validator')
 
+const authMiddleware = require('./middlewares/authMiddleware')
+const roleMiddleware = require('./middlewares/roleMiddleware')
 
 router.post('/registration',
 [
@@ -15,6 +17,7 @@ router.post('/registration',
 ] 
 ,controller.rigistration)
 router.post('/login', controller.login)
-router.get('/users', controller.getUsers)
+router.get('/users', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.getUsers)
+router.delete('/deleteUser/:id', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.deleteUser)
 
 module.exports = router
