@@ -23,4 +23,5 @@ router.post('/refresh', controller.refresh)
 router.post('/logout', controller.logout)
 router.post('/changePassword', authMiddleware, controller.changePassword)
 
+
 module.exports = router
