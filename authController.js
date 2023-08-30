@@ -72,10 +72,14 @@ class authController {
             }
             // create jwt
             const {accessToken, refreshToken} = generateAccessAndRefreshToken(user._id, user.firstName, user.lastName, user.email , user.sex, user.phone, user.roles)
-            const refresh = new Token({user: user._id, refreshToken})
-            refresh.save()
+            let refresh = await Token.findOne({user: user._id})
+            if (!refresh) {
+              refresh = new Token({user: user._id, refreshToken})
+            } else{
+              refresh.refreshToken = refreshToken
+            }
+            await refresh.save()
             return res.json({accessToken, refreshToken})
-
         } catch (error) {
             console.log(error); 
             return res.status(400).json({message:'Login error.'})
@@ -134,6 +138,49 @@ class authController {
         } catch (error) {
             console.error(error);
             return res.status(400).json({ message: 'Update token error' });
+        }
+      }
+
+
+      async logout(req, res) {
+        try {
+            const { userId } = req.body; 
+
+            const token = await Token.findOneAndDelete({user: userId})
+            if(!token){
+              return res.status(400).json({message: 'Користувача не знайдено з таким id.'})
+            }
+
+            return res.json({message: 'Ви вийшли з системи.'});
+        } catch (error) {
+            console.error(error);
+            return res.status(400).json({ message: 'Logout error' });
+        }
+      }
+
+      async changePassword(req, res) {
+        try {
+            const { userId, currentPassword, newPassword, confirmNewPassword } = req.body; 
+
+            const user = await User.findById(userId)
+            if(!user){
+              return res.status(400).json({message: 'Користувача не знайдено.'})
+            }
+
+            const validPassword = bcrypt.compareSync(currentPassword, user.password)
+            if (!validPassword) {
+              return res.status(400).json({message: 'Невірний поточний пароль.'})
+            }
+
+            const newHashedPassword = bcrypt.hashSync(newPassword, hash_password)
+
+            user.password = newHashedPassword
+            await user.save()
+
+            return res.json({message: 'Пароль змінено успішно.'});
+        } catch (error) {
+            console.error(error);
+            return res.status(400).json({ message: 'Change password error' });
         }
       }
 
