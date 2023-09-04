@@ -2,10 +2,11 @@ const User = require('./modules/User')
 const Role = require('./modules/Role')
 const Token = require('./modules/Token')
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer')
 
 const { validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken')
-const { hash_password, jwt_access_secret, jwt_refresh_secret } = require('./config')
+const { hash_password, jwt_access_secret, jwt_refresh_secret, smtp_host, smtp_port, smtp_user, smtp_password} = require('./config')
 
 
 const generateAccessAndRefreshToken = (id, firstName, lastName, email, sex, phone, roles) =>{
@@ -50,10 +51,59 @@ class authController {
             // save user
             const user = new User({firstName, lastName, email, password: hashPassword, sex, phone, roles: [userRole.value]})
             await user.save()
-            return res.json({message: 'Користувач успішно зареєстрований.'})
+
+            //відправлення листів на активацію
+            const transporter = nodemailer.createTransport({
+              host: smtp_host,
+              port: smtp_port,
+              service: 'gmail',
+              secure: false,
+              auth: {
+                user: smtp_user,
+                pass: smtp_password
+              },
+              tls: {
+                rejectUnauthorized: false,
+              },
+            })
+
+            const activationLink = `http://localhost:5000/auth/activate/${user._id}`
+
+            const mailOptions = {
+              to: email,
+              from: smtp_user,
+              subject: 'Активуйте свій обліковий запис',
+              text: `Дякуємо за реєстрацію на нашому веб-сайті. Будь ласка активуйте свій обліковий запис, перейшовши за посиланням \n\n ${activationLink}\n\nЯкщо ви не реєструвалися на нашому веб-сайті, проігноруйте цей лист.`,
+            }
+
+            transporter.sendMail(mailOptions, (err)=>{
+              if(err){
+                console.log(err)
+                return res.status(500).json({message: 'Не вдалося надіслати лист для активації.'})
+              }
+              return res.json({message: 'Лист для активації надіслано на вашу електронну адрусу.'})
+            })
+
+            // return res.json({message: 'Користувач успішно зареєстрований.'})
         } catch (error) {
            console.log(error);
            res.status(400).json({message:'Registaration error.'})
+        }
+    }
+    async activate (req, res){
+        try {
+          const { userId } = req.params 
+          const user = await User.findById(userId)
+          if(!user || user.isActivated){
+            return res.status(400).json({message: 'Невірний ID користувача або обліковий запис вже активований'})
+          }
+          user.isActivated = true
+          await user.save()
+
+            return res.json({message: 'Обліковий запис активовано. Тепер ви можете увійти.'})
+        } catch (error) {
+           console.log(error);
+           res.status(500).json({message:'Помилка сервера.'})
         }
     }
 

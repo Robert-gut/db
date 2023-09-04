@@ -22,6 +22,7 @@ router.delete('/deleteUser/:id', authMiddleware, roleMiddleware(['ADMINISTRATOR'
 router.post('/refresh', controller.refresh)
 router.post('/logout', controller.logout)
 router.post('/changePassword', authMiddleware, controller.changePassword)
+router.get('/activate/:userId', controller.activate)
 
 
 module.exports = router
