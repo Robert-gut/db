@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "seeder": "node seeder.js"
   },
   "keywords": [],
   "author": "",
@@ -13,10 +14,10 @@
     "bcrypt": "^5.1.1",
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
+    "generate-password": "^1.7.0",
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.3",
     "nodemailer": "^6.9.4",
     "nodemon": "^3.0.1"
   }
 }
-

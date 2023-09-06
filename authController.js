@@ -3,6 +3,7 @@ const Role = require('./modules/Role')
 const Token = require('./modules/Token')
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer')
+const generator = require('generate-password')
 
 const { validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken')
@@ -115,6 +116,11 @@ class authController {
             if(!user){
                 return res.status(400).json({message: `Користувача з таким email: ${email} не існує.`})
             }
+
+            if(!user.isActivated){
+              return res.status(400).json({message: `Користувача не активований, спочатку активуйте вашого акаунта.`})
+            }
+
             // check password
             const validPassword = bcrypt.compareSync(password, user.password)
             if(!validPassword){
@@ -231,6 +237,72 @@ class authController {
         } catch (error) {
             console.error(error);
             return res.status(400).json({ message: 'Change password error' });
+        }
+      }
+
+      async forgotPassword(req, res) {
+        try {
+            const { email } = req.body
+
+            const user = await User.findOne({email})
+            if(!user){
+              return res.status(400).json({message: 'Користувача з таким емейлом не знайдено.'})
+            }
+
+            const newPassword = generator.generate({
+              length: 10,
+              numbers: true,
+              symbols: true
+            })
+
+            const hashPassword = bcrypt.hashSync(newPassword, hash_password)
+            
+            user.password = hashPassword
+            await user.save()
+
+            const transporter = nodemailer.createTransport({
+              host: smtp_host,
+              port: smtp_port,
+              service: 'gmail',
+              secure: false,
+              auth: {
+                user: smtp_user,
+                pass: smtp_password,
+              },
+              tls: {
+                rejectUnauthorized: false,
+              },
+            })
+
+            const mailOptions = {
+              to: email,
+              from: smtp_user,
+              subject: 'Відновлення пароля.',
+              text: '',
+              html:
+              `
+            <h3 style='font-size: 28px;'>Ваш новий пароль:</h3>
+            <h1 style='
+            text-align: center;
+            padding: 10px;
+            background-color: silver;
+            border-radius: 12px;
+            border: 3px solid black;
+            width: 170px;
+            '>${newPassword}</h1>
+            <h4 style='font-size: 22px; color: red;'>Рекомендуємо після того як ви ввійдете у ваш акаунт, замінити пароль!</h4>
+              `
+            }
+
+            transporter.sendMail(mailOptions, (error) => {
+              if(error){
+                return res.status(500).json({message: 'Не вдалося відправити новий пароль на емейл.'})
+              }
+              return res.json({message: 'Новий пароль відправлено на ваш емейл.'})
+            })
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Помилка відновлення пароля' });
         }
       }
 
