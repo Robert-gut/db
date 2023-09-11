@@ -6,7 +6,7 @@ const {check} = require('express-validator')
 const authMiddleware = require('./middlewares/authMiddleware')
 const roleMiddleware = require('./middlewares/roleMiddleware')
 
-router.post('/registration',
+router.post('/register',
 [
     check('firstName', `Ім'я користувача не може бути порожнім.`).notEmpty(),
     check('lastName', `Прізвище користувача не може бути порожнім.`).notEmpty(),
@@ -17,13 +17,13 @@ router.post('/registration',
 ] 
 , authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.rigistration)
 router.post('/login', controller.login)
-router.get('/users', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.getUsers)
-router.delete('/deleteUser/:id', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.deleteUser)
+router.get('/GetAllUsers', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.getUsers)
+router.delete('/DeleteUser/:id', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.deleteUser)
 router.post('/refresh', controller.refresh)
-router.post('/logout', controller.logout)
-router.post('/changePassword', authMiddleware, controller.changePassword)
+router.get('/logout/:userId', controller.logout)
+router.post('/ChangePassword', authMiddleware, controller.changePassword)
 router.get('/activate/:userId', controller.activate)
-router.post('/forgotPassword', controller.forgotPassword)
+router.post('/ForgotPassword', controller.forgotPassword)
 
 
 module.exports = router

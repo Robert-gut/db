@@ -153,7 +153,7 @@ class authController {
 
       async deleteUser(req, res) {
         try {
-            const { id } = req.params; // Припускаючи, що ідентифікатор користувача передається у параметрі URL
+            const { id } = req.params; 
             const deletedUser = await User.findByIdAndDelete(id);
             if (!deletedUser) {
                 return res.status(400).json({ message: 'Користувача не знайдено' });
@@ -200,7 +200,7 @@ class authController {
 
       async logout(req, res) {
         try {
-            const { userId } = req.body; 
+            const { userId } = req.params; 
 
             const token = await Token.findOneAndDelete({user: userId})
             if(!token){
