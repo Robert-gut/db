@@ -24,6 +24,7 @@ router.get('/logout/:userId', controller.logout)
 router.post('/ChangePassword', authMiddleware, controller.changePassword)
 router.get('/activate/:userId', controller.activate)
 router.post('/ForgotPassword', controller.forgotPassword)
+router.post('/updateProfile', controller.updateProfile)
 
 
 module.exports = router

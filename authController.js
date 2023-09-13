@@ -239,6 +239,32 @@ class authController {
             return res.status(400).json({ message: 'Change password error' });
         }
       }
+      async updateProfile(req, res) {
+        try {
+            const { id, firstName, lastName, email, phone} = req.body; 
+            
+            const user = await User.findById(id)
+            if(!user){
+              return res.status(400).json({message: 'Користувача не знайдено.'})
+            }
+            console.log(user);
+
+            const validPassword = bcrypt.compareSync(currentPassword, user.password)
+            if (!validPassword) {
+              return res.status(400).json({message: 'Невірний поточний пароль.'})
+            }
+
+            const newHashedPassword = bcrypt.hashSync(newPassword, hash_password)
+
+            user.password = newHashedPassword
+            await user.save()
+
+            return res.json({message: 'Пароль змінено успішно.'});
+        } catch (error) {
+            console.error(error);
+            return res.status(400).json({ message: 'Change password error' });
+        }
+      }
 
       async forgotPassword(req, res) {
         try {
