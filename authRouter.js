@@ -19,12 +19,12 @@ router.post('/register',
 router.post('/login', controller.login)
 router.get('/GetAllUsers', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.getUsers)
 router.delete('/DeleteUser/:id', authMiddleware, roleMiddleware(['ADMINISTRATOR']), controller.deleteUser)
-router.post('/refresh', controller.refresh)
+router.post('/RefreshToken', controller.RefreshToken)
 router.get('/logout/:userId', controller.logout)
 router.post('/ChangePassword', authMiddleware, controller.changePassword)
 router.get('/activate/:userId', controller.activate)
 router.post('/ForgotPassword', controller.forgotPassword)
-router.post('/updateProfile', controller.updateProfile)
+router.post('/updateProfile', authMiddleware, controller.updateProfile)
 
 
 module.exports = router

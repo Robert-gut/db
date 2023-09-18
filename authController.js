@@ -20,7 +20,7 @@ const generateAccessAndRefreshToken = (id, firstName, lastName, email, sex, phon
         phone,
         roles
     }
-    const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '1h' })
+    const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '20s' })
     const refreshToken = jwt.sign(payload, jwt_refresh_secret, { expiresIn: '3d' })
     return {
         accessToken,
@@ -166,7 +166,7 @@ class authController {
         }
       }
 
-      async refresh(req, res) {
+      async RefreshToken(req, res) {
         try {
             const { refreshToken } = req.body; 
             const existiogToken = await Token.findOne({refreshToken})
