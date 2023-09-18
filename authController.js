@@ -247,22 +247,18 @@ class authController {
             if(!user){
               return res.status(400).json({message: 'Користувача не знайдено.'})
             }
-            console.log(user);
+            // console.logu(serId, firstName, lastName, email, phone);
 
-            const validPassword = bcrypt.compareSync(currentPassword, user.password)
-            if (!validPassword) {
-              return res.status(400).json({message: 'Невірний поточний пароль.'})
-            }
-
-            const newHashedPassword = bcrypt.hashSync(newPassword, hash_password)
-
-            user.password = newHashedPassword
+            user.firstName = firstName
+            user.lastName = lastName
+            user.email = email
+            user.phone = phone
             await user.save()
 
-            return res.json({message: 'Пароль змінено успішно.'});
+            return res.json({message: 'Користовач змінено успішно.'});
         } catch (error) {
             console.error(error);
-            return res.status(400).json({ message: 'Change password error' });
+            return res.status(400).json({ message: 'Edit profile error' });
         }
       }
 
