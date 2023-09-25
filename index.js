@@ -22,7 +22,7 @@ app.use('/api/User', authRouser)
 const start = async () => {
     try {
         mongoose.connect(url_db)
-        app.listen(PORT, () => console.log(`SERVER STARTED ON PORT ${PORT} okey`))
+        app.listen(PORT, () => console.log(`SERVER STARTED ON PORT ${PORT}`))
     } catch (error) {
         console.log(error);
     }
