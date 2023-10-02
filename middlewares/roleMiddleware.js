@@ -9,7 +9,7 @@ module.exports = function (roles) {
     try {
       const token = req.headers.authorization.split(' ')[1]
       if (!token) {
-        return res.status(401).json({message: 'Користувач не авторизований.'})  
+        return res.status(401).json({message: 'Користувач не авторизований!.'})  
       }
       //декудуємо токена
       const {roles: userRoles} = jwt.verify(token, jwt_access_secret)
@@ -26,7 +26,7 @@ module.exports = function (roles) {
       next()
     } catch (error) {
       console.log(error);
-      return res.status(401).json({message: 'Користувач не авторизований.'})  
+      return res.status(401).json({message: 'Користувач не авторизований!.'})  
     }
 
   }
