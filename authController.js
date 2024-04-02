@@ -20,7 +20,7 @@ const generateAccessAndRefreshToken = (id, firstName, lastName, email, sex, phon
         phone,
         roles
     }
-    const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '20s' })
+    const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '30m' })
     const refreshToken = jwt.sign(payload, jwt_refresh_secret, { expiresIn: '3d' })
     return {
         accessToken,
@@ -142,6 +142,18 @@ class authController {
         }
     }
 
+    // async getUsers (req, res){
+    //     try {
+    //       const users = new Role()
+    //       const users2 = new Role({value: 'ADMIN'})
+    //       const users3 = new Role({value: 'DEV'})
+    //       await users.save()
+    //       await users2.save()
+    //       await users3.save()
+    //     } catch (error) {
+    //       console.log(error); 
+    //     }
+    //   }
     async getUsers (req, res){
         try {
           const users = await User.find()
@@ -241,7 +253,7 @@ class authController {
       }
       async updateProfile(req, res) {
         try {
-            const { id, firstName, lastName, email, phone} = req.body; 
+            const { id, firstName, lastName, email, sex, phone} = req.body; 
             
             const user = await User.findById(id)
             if(!user){
@@ -252,6 +264,7 @@ class authController {
             user.firstName = firstName
             user.lastName = lastName
             user.email = email
+            user.sex = sex
             user.phone = phone
             await user.save()
 
