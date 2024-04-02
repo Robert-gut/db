@@ -17,10 +17,14 @@ db.once('open', async () => {
       lastName: 'ADMIN',
       email: 'ADMIN@ADMIN.COM',
       password: hashPassword,
-      sex: 'ADMIN',
+      gender: 'ADMIN', // 'sex' changed to 'gender' to match schema
       phone: 999999999999,
-      roles: ['ADMINISTRATOR','USER'],
-      isActivated: true
+      role: 'ADMINISTRATOR',
+      isActivated: true,
+      dateOfBirth: new Date('1980-01-01'), // Set DOB as an example
+      city: 'Kyiv', // Set city as an example
+      address: '123 Main Street', // Set address as an example
+      zipCode: '01001', // Set zip code as an example
     })
 
     await user.save()

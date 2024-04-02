@@ -10,15 +10,20 @@ const jwt = require('jsonwebtoken')
 const { hash_password, jwt_access_secret, jwt_refresh_secret, smtp_host, smtp_port, smtp_user, smtp_password} = require('./config')
 
 
-const generateAccessAndRefreshToken = (id, firstName, lastName, email, sex, phone, roles) =>{
+const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivated, gender, phone, role, dateOfBirth, city, address, zipCode) =>{
     const payload = {
-        id,
-        firstName,
-        lastName,
-        email,
-        sex,
-        phone,
-        roles
+      id,
+      firstName,
+      lastName,
+      email,
+      isActivated,
+      gender,
+      phone,
+      role,
+      dateOfBirth,
+      city,
+      address,
+      zipCode,
     }
     const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '30m' })
     const refreshToken = jwt.sign(payload, jwt_refresh_secret, { expiresIn: '3d' })
@@ -37,7 +42,7 @@ class authController {
                 return res.status(400).json({message: 'Помилка реєстрації.', errors})
             }
             // condidate
-            const {firstName, lastName, email, password, confirmPassword, sex, phone} = req.body
+            const {firstName, lastName, email, password, confirmPassword, gender, phone, role, dateOfBirth, city, address, zipCode} = req.body
             const condidate = await User.findOne({email})
             if(condidate){
                 return res.status(400).json({message: 'Користувач з таким email уже існує.'})
@@ -48,9 +53,9 @@ class authController {
             }
             // hashPassword
             const hashPassword = bcrypt.hashSync(password, hash_password);
-            const userRole = await Role.findOne({value: 'USER'})
+            // const userRole = await Role.findOne({value: 'USER'})
             // save user
-            const user = new User({firstName, lastName, email, password: hashPassword, sex, phone, roles: [userRole.value]})
+            const user = new User({firstName, lastName, email, password: hashPassword, gender, phone, role, dateOfBirth, city, address, zipCode})
             await user.save()
 
             //відправлення листів на активацію
@@ -127,7 +132,7 @@ class authController {
                 return res.status(400).json({message: 'Невірний пароль'})
             }
             // create jwt
-            const {accessToken, refreshToken} = generateAccessAndRefreshToken(user._id, user.firstName, user.lastName, user.email , user.sex, user.phone, user.roles)
+            const {accessToken, refreshToken} = generateAccessAndRefreshToken(user._id, user.firstName, user.lastName, user.email, user.isActivated, user.gender, user.phone, user.role, user.dateOfBirth, user.city, user.address, user.zipCode)
             let refresh = await Token.findOne({user: user._id})
             if (!refresh) {
               refresh = new Token({user: user._id, refreshToken})
@@ -193,9 +198,14 @@ class authController {
                 decodedPayload.firstName,
                 decodedPayload.lastName,
                 decodedPayload.email,
-                decodedPayload.sex,
+                decodedPayload.isActivated,
+                decodedPayload.gender,
                 decodedPayload.phone,
-                decodedPayload.roles
+                decodedPayload.role,
+                decodedPayload.dateOfBirth,
+                decodedPayload.city,
+                decodedPayload.address,
+                decodedPayload.zipCode,
             )
 
             

@@ -1,11 +1,10 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const { url_db } = require('./config')
-const authRouser = require('./authRouter')
+const authRouter = require('./authRouter')
 const cors = require('cors')
 
 const PORT = process.env.PORT || 5000
-
 const app = express()
 
 
@@ -17,7 +16,7 @@ app.use(cors({
     credentials: true,
 }))
 
-app.use('/api/User', authRouser)
+app.use('/api/User', authRouter)
 
 const start = async () => {
     try {
