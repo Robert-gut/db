@@ -11,7 +11,8 @@ const app = express()
 app.use(express.json())
 
 app.use(cors({
-    origin: 'http://3.125.43.47:5173',
+    // origin: 'http://3.125.43.47:5173',
+    origin: 'http://localhost:5173',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
 }))
