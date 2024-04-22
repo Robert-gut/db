@@ -2,7 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const { url_db } = require('./config')
 const authRouter = require('./authRouter')
-const cors = require('cors')
+// const cors = require('cors')
 
 const PORT = process.env.PORT || 80
 const app = express()
@@ -10,12 +10,12 @@ const app = express()
 
 app.use(express.json())
 
-app.use(cors({
-    // origin: 'http://3.125.43.47:5173',
-    origin: 'http://localhost:5173',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-}))
+// app.use(cors({
+//     // origin: 'http://3.125.43.47:5173',
+//     origin: 'http://localhost:5173',
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//     credentials: true,
+// }))
 
 app.use('/api/User', authRouter)
 
