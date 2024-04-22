@@ -73,7 +73,7 @@ class authController {
               },
             })
 
-            const activationLink = `http://35.180.116.219:5000/api/User/activate/${user._id}`
+            const activationLink = `http://35.180.116.219:80/api/User/activate/${user._id}`
 
             const mailOptions = {
               to: email,
