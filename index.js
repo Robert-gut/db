@@ -4,7 +4,7 @@ const { url_db } = require('./config')
 const authRouter = require('./authRouter')
 const cors = require('cors')
 
-const PORT = process.env.PORT || 80
+const PORT = process.env.PORT || 3000
 const app = express()
 
 
