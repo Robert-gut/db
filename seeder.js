@@ -17,8 +17,8 @@ db.once('open', async () => {
       lastName: 'ADMIN',
       email: 'ADMIN@ADMIN.COM',
       password: hashPassword,
-      gender: 'ADMIN', // 'sex' changed to 'gender' to match schema
-      phone: 999999999999,
+      gender: 'ADMIN', // 'gender' changed to 'gender' to match schema
+      phone: '999999999999',
       role: 'ADMINISTRATOR',
       isActivated: true,
       dateOfBirth: new Date('1980-01-01'), // Set DOB as an example
@@ -30,7 +30,7 @@ db.once('open', async () => {
     await user.save()
     console.log('Користувач створений успішно.');
   } catch (error) {
-    console.log('Помилка створення користувача', eroor);
+    console.log('Помилка створення користувача', error);
   } finally {
     db.close()
   }

@@ -263,7 +263,7 @@ class authController {
       }
       async updateProfile(req, res) {
         try {
-            const { id, firstName, lastName, email, sex, phone} = req.body; 
+            const { id, firstName, lastName, email, gender, phone} = req.body; 
             
             const user = await User.findById(id)
             if(!user){
@@ -274,7 +274,7 @@ class authController {
             user.firstName = firstName
             user.lastName = lastName
             user.email = email
-            user.sex = sex
+            user.gender = gender
             user.phone = phone
             await user.save()
 
