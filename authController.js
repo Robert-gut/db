@@ -1,14 +1,17 @@
-const User = require('./modules/User')
-const Role = require('./modules/Role')
-const Token = require('./modules/Token')
+const User = require('./modules/User');
+const Role = require('./modules/Role');
+const Token = require('./modules/Token');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer')
-const generator = require('generate-password')
+const nodemailer = require('nodemailer');
+const generator = require('generate-password');
+const path = require('path');
+const fs = require('fs').promises; // Використовуємо async/await версію fs
 
 const { validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken')
 const { hash_password, jwt_access_secret, jwt_refresh_secret, smtp_host, smtp_port, smtp_user, smtp_password} = require('./config')
 
+const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 
 const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivated, gender, phone, role, dateOfBirth, city, address, zipCode) =>{
     const payload = {
@@ -34,66 +37,109 @@ const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivat
 }
 
 class authController {
-    async rigistration (req, res){
+    async rigistration(req, res) {
         try {
-            // valid
-            const errors = validationResult(req)
-            if(!errors.isEmpty()){
-                return res.status(400).json({message: 'Помилка реєстрації.', errors})
+            // Перевірка на помилки валідації
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                // Якщо є помилки, видаляємо завантажений файл, якщо він існує
+                if (req.file) {
+                    await fs.unlink(req.file.path);
+                }
+                return res.status(400).json({ message: 'Помилка реєстрації.', errors });
             }
-            // condidate
-            const {firstName, lastName, email, password, confirmPassword, gender, phone, role, dateOfBirth, city, address, zipCode} = req.body
-            const condidate = await User.findOne({email})
-            if(condidate){
-                return res.status(400).json({message: 'Користувач з таким email уже існує.'})
+            
+            // Перевірка паролів
+            const { firstName, lastName, email, password, confirmPassword, gender, phone, role, dateOfBirth, city, address, zipCode } = req.body;
+            if (password !== confirmPassword) {
+                 // Якщо паролі не співпадають, видаляємо завантажений файл, якщо він існує
+                if (req.file) {
+                    await fs.unlink(req.file.path);
+                }
+                return res.status(400).json({ message: 'Паролі не співпадають (поле: password і confirmPassword)' });
             }
-            // check password and confirmPassword
-            if(password !== confirmPassword){
-              return res.status(400).json({message: 'Паролі не співпадають(поле:password і confirmPassword)'})
+
+            // Перевірка, чи існує користувач з таким email
+            const condidate = await User.findOne({ email });
+            if (condidate) {
+                // Якщо користувач вже існує, видаляємо завантажений файл
+                if (req.file) {
+                    await fs.unlink(req.file.path);
+                }
+                return res.status(400).json({ message: 'Користувач з таким email уже існує.' });
             }
-            // hashPassword
+
+            // Хешування пароля
             const hashPassword = bcrypt.hashSync(password, hash_password);
-            // const userRole = await Role.findOne({value: 'USER'})
-            // save user
-            const user = new User({firstName, lastName, email, password: hashPassword, gender, phone, role, dateOfBirth, city, address, zipCode})
-            await user.save()
+            
+            // Створення та збереження користувача без профільного фото
+            const user = new User({ firstName, lastName, email, password: hashPassword, gender, phone, role, dateOfBirth, city, address, zipCode });
+            await user.save();
 
-            //відправлення листів на активацію
-            const transporter = nodemailer.createTransport({
-              host: smtp_host,
-              port: smtp_port,
-              service: 'gmail',
-              secure: false,
-              auth: {
-                user: smtp_user,
-                pass: smtp_password
-              },
-              tls: {
-                rejectUnauthorized: false,
-              },
-            })
+            // === ЛОГІКА З ФАЙЛАМИ ===
+            // Перевіряємо, чи був завантажений файл
+            if (req.file) {
+                const oldPath = req.file.path;
+                const fileExt = path.extname(req.file.originalname);
+                // Нова назва файлу = ID користувача + розширення файлу
+                const newFileName = `${user._id}${fileExt}`;
+                const newPath = path.join(uploadDir, newFileName);
 
-            const activationLink = `http://35.180.116.219:80/api/User/activate/${user._id}`
-
-            const mailOptions = {
-              to: email,
-              from: smtp_user,
-              subject: 'Активуйте свій обліковий запис',
-              text: `Дякуємо за реєстрацію на нашому веб-сайті. Будь ласка активуйте свій обліковий запис, перейшовши за посиланням \n\n ${activationLink}\n\nЯкщо ви не реєструвалися на нашому веб-сайті, проігноруйте цей лист.`,
+                try {
+                    // Перейменовуємо файл на нове, унікальне ім'я
+                    await fs.rename(oldPath, newPath);
+                    
+                    // Зберігаємо шлях до фото у базі даних
+                    user.profilePicture = `/uploads/${newFileName}`;
+                    await user.save();
+                } catch (renameError) {
+                    // Обробка помилки перейменування файлу
+                    console.error('Помилка при перейменуванні файлу:', renameError);
+                    // Можна залишити користувача без фото або видалити його
+                    // await User.findByIdAndDelete(user._id);
+                    // return res.status(500).json({ message: 'Registration failed due to file error.' });
+                }
+            } else {
+                // Якщо файл не завантажено, встановлюємо дефолтний аватар
+                user.profilePicture = '/uploads/default-avatar.png'; // Переконайтеся, що такий файл існує
+                await user.save();
             }
+            // === КІНЕЦЬ ЛОГІКИ З ФАЙЛАМИ ===
 
-            transporter.sendMail(mailOptions, (err)=>{
-              if(err){
-                console.log(err)
-                return res.status(500).json({message: 'Не вдалося надіслати лист для активації.'})
-              }
-              return res.json({message: 'Лист для активації надіслано на вашу електронну адрусу.'})
-            })
+            // Відправлення листа для активації
+            const transporter = nodemailer.createTransport({
+                host: smtp_host,
+                port: smtp_port,
+                service: 'gmail',
+                secure: false,
+                auth: {
+                    user: smtp_user,
+                    pass: smtp_password
+                },
+                tls: {
+                    rejectUnauthorized: false,
+                },
+            });
 
-            // return res.json({message: 'Користувач успішно зареєстрований.'})
+            const activationLink = `http://35.180.116.219:80/api/User/activate/${user._id}`;
+            const mailOptions = {
+                to: email,
+                from: smtp_user,
+                subject: 'Активуйте свій обліковий запис',
+                text: `Дякуємо за реєстрацію на нашому веб-сайті. Будь ласка активуйте свій обліковий запис, перейшовши за посиланням \n\n ${activationLink}\n\nЯкщо ви не реєструвалися на нашому веб-сайті, проігноруйте цей лист.`,
+            };
+
+            transporter.sendMail(mailOptions, (err) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(500).json({ message: 'Не вдалося надіслати лист для активації.' });
+                }
+                return res.json({ message: 'Лист для активації надіслано на вашу електронну адрусу.' });
+            });
+
         } catch (error) {
            console.log(error);
-           res.status(400).json({message:'Registaration error.'})
+           res.status(500).json({ message: 'Registration error.' });
         }
     }
     async activate (req, res){

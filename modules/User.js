@@ -23,6 +23,10 @@ const User = new Schema({
       relationship: { type: String },
       phone: { type: String },
     },
+  profilePicture: {
+    type: String,
+    default: '/uploads/default-avatar.png' 
+  }
 });
 
 module.exports = model('User', User);
