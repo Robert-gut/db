@@ -28,3 +28,5 @@ const start = async () => {
     }
 }
 start()
+
+console.log(__dirname)
