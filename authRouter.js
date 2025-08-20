@@ -27,23 +27,22 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post('/register',
-    upload.single('profilePicture'),
-    [
-        check('firstName', `Ім'я користувача не може бути порожнім.`).notEmpty(),
-        check('lastName', `Прізвище користувача не може бути порожнім.`).notEmpty(),
-        check('email', `Поле email не може бути порожнім.`).notEmpty(),
-        check('gender', `Поле стать не може бути порожнім.`).notEmpty(),
-        check('role', `Поле role не може бути порожнім.`).notEmpty(),
-        check('dateOfBirth', `Поле dateOfBirth не може бути порожнім.`).notEmpty(),
-        check('city', `Поле city не може бути порожнім.`).notEmpty(),
-        check('address', `Поле address не може бути порожнім.`).notEmpty(),
-        check('zipCode', `Поле zipCode не може бути порожнім.`).notEmpty(),
-        check('phone', `Поле телефон не може бути порожнім.`).notEmpty(),
-        check('password', 'Пароль може мати мінімум 8 символів і максимум 16 символів.').isLength({ min: 8, max: 16 })
-    ],
-    authMiddleware,
-    roleMiddleware('ADMINISTRATOR'),
-    controller.rigistration
+    upload.single('profilePicture'),
+    [
+        check('firstName', `Ім'я користувача не може бути порожнім.`).notEmpty(),
+        check('lastName', `Прізвище користувача не може бути порожнім.`).notEmpty(),
+        check('email', `Поле email не може бути порожнім.`).notEmpty(),
+        check('gender', `Поле стать не може бути порожнім.`).notEmpty(),
+        check('dateOfBirth', `Поле dateOfBirth не може бути порожнім.`).notEmpty(),
+        check('position', `Поле посада не може бути порожнім.`).notEmpty(),
+        check('hireDate', `Поле дата найму не може бути порожнім.`).notEmpty(),
+        check('phone', `Поле телефон не може бути порожнім.`).notEmpty(),
+        check('password', 'Пароль може мати мінімум 8 символів і максимум 16 символів.').isLength({ min: 8, max: 16 }),
+        check('confirmPassword', 'Поле підтвердження пароля не може бути порожнім.').notEmpty()
+    ],
+    authMiddleware,
+    roleMiddleware('ADMINISTRATOR'),
+    controller.rigistration
 );
 router.post('/login', controller.login)
 router.get('/getAllUsers', authMiddleware, roleMiddleware('ADMINISTRATOR'), controller.getUsers)

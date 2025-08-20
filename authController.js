@@ -13,20 +13,27 @@ const { hash_password, jwt_access_secret, jwt_refresh_secret, smtp_host, smtp_po
 
 const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 
-const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivated, gender, phone, role, dateOfBirth, city, address, zipCode) =>{
+const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivated, gender, phone, role, dateOfBirth, city, address, zipCode, bio, position, hireDate, employmentType, status, emergencyContact, profilePicture) => {
     const payload = {
-      id,
-      firstName,
-      lastName,
-      email,
-      isActivated,
-      gender,
-      phone,
-      role,
-      dateOfBirth,
-      city,
-      address,
-      zipCode,
+        id,
+        firstName,
+        lastName,
+        email,
+        isActivated,
+        gender,
+        phone,
+        role,
+        dateOfBirth,
+        city,
+        address,
+        zipCode,
+        bio,
+        position,
+        hireDate,
+        employmentType,
+        status,
+        emergencyContact,
+        profilePicture
     }
     const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '30m' })
     const refreshToken = jwt.sign(payload, jwt_refresh_secret, { expiresIn: '3d' })
@@ -50,7 +57,7 @@ class authController {
             }
             
             // Перевірка паролів
-            const { firstName, lastName, email, password, confirmPassword, gender, phone, role, dateOfBirth, city, address, zipCode } = req.body;
+            const { firstName, lastName, email, password, confirmPassword, gender, phone, role, dateOfBirth, city, address, zipCode, bio, position, hireDate, employmentType, status, emergencyContact } = req.body;
             if (password !== confirmPassword) {
                  // Якщо паролі не співпадають, видаляємо завантажений файл, якщо він існує
                 if (req.file) {
@@ -73,7 +80,7 @@ class authController {
             const hashPassword = bcrypt.hashSync(password, hash_password);
             
             // Створення та збереження користувача без профільного фото
-            const user = new User({ firstName, lastName, email, password: hashPassword, gender, phone, role, dateOfBirth, city, address, zipCode });
+             const user = new User({ firstName, lastName, email, password: hashPassword, gender, phone, role, dateOfBirth, city, address, zipCode, bio, position, hireDate, employmentType, status, emergencyContact });
             await user.save();
 
             // === ЛОГІКА З ФАЙЛАМИ ===
@@ -142,6 +149,7 @@ class authController {
            res.status(500).json({ message: 'Registration error.' });
         }
     }
+
     async activate (req, res){
         try {
           const { userId } = req.params 
@@ -178,7 +186,7 @@ class authController {
                 return res.status(400).json({message: 'Невірний пароль'})
             }
             // create jwt
-            const {accessToken, refreshToken} = generateAccessAndRefreshToken(user._id, user.firstName, user.lastName, user.email, user.isActivated, user.gender, user.phone, user.role, user.dateOfBirth, user.city, user.address, user.zipCode)
+            const {accessToken, refreshToken} = generateAccessAndRefreshToken(user._id, user.firstName, user.lastName, user.email, user.isActivated, user.gender, user.phone, user.role, user.dateOfBirth, user.city, user.address, user.zipCode, user.bio, user.position, user.hireDate, user.employmentType, user.status, user.emergencyContact, user.profilePicture)
             let refresh = await Token.findOne({user: user._id})
             if (!refresh) {
               refresh = new Token({user: user._id, refreshToken})
@@ -214,32 +222,32 @@ class authController {
         }
       }
 
-      async deleteUser(req, res) {
-        try {
-            const { id } = req.params; 
-            const deletedUser = await User.findByIdAndDelete(id);
-            if (!deletedUser) {
-                return res.status(400).json({ message: 'Користувача не знайдено' });
-            }
-            
-            return res.json({ message: 'Користувача успішно видалено', deletedUser });
-        } catch (error) {
-            console.error(error);
-            return res.status(400).json({ message: 'Delete user error' });
-        }
+    async deleteUser(req, res) {
+      try {
+          const { id } = req.params; 
+          const deletedUser = await User.findByIdAndDelete(id);
+          if (!deletedUser) {
+              return res.status(400).json({ message: 'Користувача не знайдено' });
+          }
+          
+          return res.json({ message: 'Користувача успішно видалено', deletedUser });
+      } catch (error) {
+          console.error(error);
+          return res.status(400).json({ message: 'Delete user error' });
       }
+    }
 
-      async RefreshToken(req, res) {
-        try {
-            const { refreshToken } = req.body; 
-            const existiogToken = await Token.findOne({refreshToken})
-            if (!existiogToken) {
-                return res.status(401).json({message: 'Невірний або недійсний рефреш токен.'})
-            }
+    async RefreshToken(req, res) {
+      try {
+          const { refreshToken } = req.body; 
+          const existiogToken = await Token.findOne({refreshToken})
+          if (!existiogToken) {
+              return res.status(401).json({message: 'Невірний або недійсний рефреш токен.'})
+          }
 
-            const decodedPayload = jwt.verify(refreshToken, jwt_refresh_secret)
+          const decodedPayload = jwt.verify(refreshToken, jwt_refresh_secret)
 
-            const {accessToken, refreshToken: newRefreshToken} =  generateAccessAndRefreshToken(
+          const {accessToken, refreshToken: newRefreshToken} = generateAccessAndRefreshToken(
                 decodedPayload.id,
                 decodedPayload.firstName,
                 decodedPayload.lastName,
@@ -252,76 +260,89 @@ class authController {
                 decodedPayload.city,
                 decodedPayload.address,
                 decodedPayload.zipCode,
+                decodedPayload.bio,
+                decodedPayload.position,
+                decodedPayload.hireDate,
+                decodedPayload.employmentType,
+                decodedPayload.status,
+                decodedPayload.emergencyContact,
+                decodedPayload.profilePicture
             )
 
-            
-            existiogToken.refreshToken = newRefreshToken
-            await existiogToken.save()
+          
+          existiogToken.refreshToken = newRefreshToken
+          await existiogToken.save()
 
-            return res.json({ accessToken, refreshToken: newRefreshToken });
-        } catch (error) {
-            console.error(error);
-            return res.status(400).json({ message: 'Update token error' });
-        }
+          return res.json({ accessToken, refreshToken: newRefreshToken });
+      } catch (error) {
+          console.error(error);
+          return res.status(400).json({ message: 'Update token error' });
       }
+    }
 
+    async logout(req, res) {
+      try {
+          const { userId } = req.params; 
 
-      async logout(req, res) {
-        try {
-            const { userId } = req.params; 
+          const token = await Token.findOneAndDelete({user: userId})
+          if(!token){
+            return res.status(400).json({message: 'Користувача не знайдено з таким id.'})
+          }
 
-            const token = await Token.findOneAndDelete({user: userId})
-            if(!token){
-              return res.status(400).json({message: 'Користувача не знайдено з таким id.'})
-            }
-
-            return res.json({message: 'Ви вийшли з системи.'});
-        } catch (error) {
-            console.error(error);
-            return res.status(400).json({ message: 'Logout error' });
-        }
+          return res.json({message: 'Ви вийшли з системи.'});
+      } catch (error) {
+          console.error(error);
+          return res.status(400).json({ message: 'Logout error' });
       }
+    }
 
-      async changePassword(req, res) {
-        try {
-            const { userId, currentPassword, newPassword, confirmNewPassword } = req.body; 
+    async changePassword(req, res) {
+      try {
+          const { userId, currentPassword, newPassword, confirmNewPassword } = req.body; 
 
-            const user = await User.findById(userId)
-            if(!user){
-              return res.status(400).json({message: 'Користувача не знайдено.'})
-            }
+          const user = await User.findById(userId)
+          if(!user){
+            return res.status(400).json({message: 'Користувача не знайдено.'})
+          }
 
-            const validPassword = bcrypt.compareSync(currentPassword, user.password)
-            if (!validPassword) {
-              return res.status(400).json({message: 'Невірний поточний пароль.'})
-            }
+          const validPassword = bcrypt.compareSync(currentPassword, user.password)
+          if (!validPassword) {
+            return res.status(400).json({message: 'Невірний поточний пароль.'})
+          }
 
-            const newHashedPassword = bcrypt.hashSync(newPassword, hash_password)
+          const newHashedPassword = bcrypt.hashSync(newPassword, hash_password)
 
-            user.password = newHashedPassword
-            await user.save()
+          user.password = newHashedPassword
+          await user.save()
 
-            return res.json({message: 'Пароль змінено успішно.'});
-        } catch (error) {
-            console.error(error);
-            return res.status(400).json({ message: 'Change password error' });
-        }
+          return res.json({message: 'Пароль змінено успішно.'});
+      } catch (error) {
+          console.error(error);
+          return res.status(400).json({ message: 'Change password error' });
       }
-      async updateProfile(req, res) {
-        try {
-            const { id, firstName, lastName, email, gender, phone} = req.body; 
+    }
+
+    async updateProfile(req, res) {
+      try {
+            const { id, firstName, lastName, email, gender, phone, bio, position, hireDate, employmentType, status, emergencyContact } = req.body; 
             
             const user = await User.findById(id)
             if(!user){
               return res.status(400).json({message: 'Користувача не знайдено.'})
             }
-            // console.logu(serId, firstName, lastName, email, phone);
-
+            
             user.firstName = firstName
             user.lastName = lastName
             user.email = email
             user.gender = gender
             user.phone = phone
+            user.bio = bio;
+            user.position = position;
+            user.hireDate = hireDate;
+            user.employmentType = employmentType;
+            user.status = status;
+            user.emergencyContact = emergencyContact;
+            
             await user.save()
 
             return res.json({message: 'Користовач змінено успішно.'});
@@ -329,79 +350,76 @@ class authController {
             console.error(error);
             return res.status(400).json({ message: 'Edit profile error' });
         }
-      }
-
-      async forgotPassword(req, res) {
-        try {
-            const { email } = req.body
-
-            const user = await User.findOne({email})
-            if(!user){
-              return res.status(400).json({message: 'Користувача з таким емейлом не знайдено.'})
-            }
-
-            const newPassword = generator.generate({
-              length: 10,
-              numbers: true,
-              symbols: true
-            })
-
-            const hashPassword = bcrypt.hashSync(newPassword, hash_password)
-            
-            user.password = hashPassword
-            await user.save()
-
-            const transporter = nodemailer.createTransport({
-              host: smtp_host,
-              port: smtp_port,
-              service: 'gmail',
-              secure: false,
-              auth: {
-                user: smtp_user,
-                pass: smtp_password,
-              },
-              tls: {
-                rejectUnauthorized: false,
-              },
-            })
-
-            const mailOptions = {
-              to: email,
-              from: smtp_user,
-              subject: 'Відновлення пароля.',
-              text: '',
-              html:
-              `
-            <h3 style='font-size: 28px;'>Ваш новий пароль:</h3>
-            <h1 style='
-            text-align: center;
-            padding: 10px;
-            background-color: silver;
-            border-radius: 12px;
-            border: 3px solid black;
-            width: 170px;
-            '>${newPassword}</h1>
-            <h4 style='font-size: 22px; color: red;'>Рекомендуємо після того як ви ввійдете у ваш акаунт, замінити пароль!</h4>
-              `
-            }
-
-            transporter.sendMail(mailOptions, (error) => {
-              if(error){
-                return res.status(500).json({message: 'Не вдалося відправити новий пароль на емейл.'})
-              }
-              return res.json({message: 'Новий пароль відправлено на ваш емейл.'})
-            })
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: 'Помилка відновлення пароля' });
-        }
-      }
-
-
     }
 
-    
-    
+    async forgotPassword(req, res) {
+      try {
+          const { email } = req.body
+
+          const user = await User.findOne({email})
+          if(!user){
+            return res.status(400).json({message: 'Користувача з таким емейлом не знайдено.'})
+          }
+
+          const newPassword = generator.generate({
+            length: 10,
+            numbers: true,
+            symbols: true
+          })
+
+          const hashPassword = bcrypt.hashSync(newPassword, hash_password)
+          
+          user.password = hashPassword
+          await user.save()
+
+          const transporter = nodemailer.createTransport({
+            host: smtp_host,
+            port: smtp_port,
+            service: 'gmail',
+            secure: false,
+            auth: {
+              user: smtp_user,
+              pass: smtp_password,
+            },
+            tls: {
+              rejectUnauthorized: false,
+            },
+          })
+
+          const mailOptions = {
+            to: email,
+            from: smtp_user,
+            subject: 'Відновлення пароля.',
+            text: '',
+            html:
+            `
+          <h3 style='font-size: 28px;'>Ваш новий пароль:</h3>
+          <h1 style='
+          text-align: center;
+          padding: 10px;
+          background-color: silver;
+          border-radius: 12px;
+          border: 3px solid black;
+          width: 170px;
+          '>${newPassword}</h1>
+          <h4 style='font-size: 22px; color: red;'>Рекомендуємо після того як ви ввійдете у ваш акаунт, замінити пароль!</h4>
+            `
+          }
+
+          transporter.sendMail(mailOptions, (error) => {
+            if(error){
+              return res.status(500).json({message: 'Не вдалося відправити новий пароль на емейл.'})
+            }
+            return res.json({message: 'Новий пароль відправлено на ваш емейл.'})
+          })
+      } catch (error) {
+          console.error(error);
+          return res.status(500).json({ message: 'Помилка відновлення пароля' });
+      }
+    }
+
+}
+
     module.exports = new authController()
 
 
