@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post('/register',
-    upload.single('profilePicture'),
+  upload.single('profilePicture'),
     [
         check('firstName', `Ім'я користувача не може бути порожнім.`).notEmpty(),
         check('lastName', `Прізвище користувача не може бути порожнім.`).notEmpty(),

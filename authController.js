@@ -58,6 +58,7 @@ class authController {
             
             // Перевірка паролів
             const { firstName, lastName, email, password, confirmPassword, gender, phone, role, dateOfBirth, city, address, zipCode, bio, position, hireDate, employmentType, status, emergencyContact } = req.body;
+            
             if (password !== confirmPassword) {
                  // Якщо паролі не співпадають, видаляємо завантажений файл, якщо він існує
                 if (req.file) {
