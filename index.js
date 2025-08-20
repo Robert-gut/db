@@ -26,7 +26,6 @@ const start = async () => {
     } catch (error) {
         console.log(error);
     }
-}
+  }
+  console.log(__dirname)
 start()
-
-console.log(__dirname)
