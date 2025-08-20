@@ -13,6 +13,7 @@ const User = new Schema({
   hireDate: { type: Date, required: true },
   phone: { type: String, required: true },
   role: { type: String, ref: 'Role' },
+  employmentType: { type: String, enum: ['full-time', 'part-time', 'contract'], default: 'full-time' },
   status: { type: String, enum: ['active', 'on-leave', 'terminated'], default: 'active' },
   city: { type: String },
   address: { type: String },
