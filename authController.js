@@ -224,18 +224,29 @@ class authController {
       }
 
     async deleteUser(req, res) {
-      try {
-          const { id } = req.params; 
-          const deletedUser = await User.findByIdAndDelete(id);
-          if (!deletedUser) {
-              return res.status(400).json({ message: 'Користувача не знайдено' });
-          }
-          
-          return res.json({ message: 'Користувача успішно видалено', deletedUser });
-      } catch (error) {
-          console.error(error);
-          return res.status(400).json({ message: 'Delete user error' });
-      }
+        try {
+            const { id } = req.params;
+            const user = await User.findById(id);
+            if (!user) {
+                return res.status(404).json({ message: 'Користувач не знайдений.' });
+            }
+            if (user.profilePicture) {
+                const uploadDir = path.join(__dirname, '..', 'uploads');
+                const filePath = path.join(uploadDir, user.profilePicture.replace('/uploads/', ''));
+                try {
+                    await fs.unlink(filePath);
+                    console.log(`Файл ${filePath} успішно видалено.`);
+                } catch (err) {
+                    console.error(`Помилка при видаленні файлу ${filePath}:`, err);
+                }
+            }
+            await User.findByIdAndDelete(id);
+            return res.status(200).json({ message: 'Користувач та його фотографія успішно видалені.' });
+
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ message: 'Помилка сервера при видаленні користувача.' });
+        }
     }
 
     async RefreshToken(req, res) {
