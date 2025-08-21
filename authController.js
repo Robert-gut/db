@@ -11,7 +11,7 @@ const { validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken')
 const { hash_password, jwt_access_secret, jwt_refresh_secret, smtp_host, smtp_port, smtp_user, smtp_password} = require('./config')
 
-const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+const uploadDir = path.join(__dirname, '..', 'uploads');
 
 const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivated, gender, phone, role, dateOfBirth, city, address, zipCode, bio, position, hireDate, employmentType, status, emergencyContact, profilePicture) => {
     const payload = {
