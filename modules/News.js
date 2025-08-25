@@ -21,4 +21,4 @@ const News = new Schema({
     }
 });
 
-module.exports = model('News', NewsSchema);
+module.exports = model('News', News);

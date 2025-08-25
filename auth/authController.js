@@ -1,6 +1,6 @@
-const User = require('./modules/User');
-const Role = require('./modules/Role');
-const Token = require('./modules/Token');
+const User = require('../modules/User');
+const Role = require('../modules/Role');
+const Token = require('../modules/Token');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const generator = require('generate-password');
@@ -9,9 +9,9 @@ const fs = require('fs').promises; // Використовуємо async/await �
 
 const { validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken')
-const { hash_password, jwt_access_secret, jwt_refresh_secret, smtp_host, smtp_port, smtp_user, smtp_password} = require('./config')
+const { hash_password, jwt_access_secret, jwt_refresh_secret, smtp_host, smtp_port, smtp_user, smtp_password} = require('../config')
 
-const uploadDir = path.join(__dirname, '..', 'uploads');
+const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 
 const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivated, gender, phone, role, dateOfBirth, city, address, zipCode, bio, position, hireDate, employmentType, status, emergencyContact, profilePicture) => {
     const payload = {
@@ -231,7 +231,7 @@ class authController {
                 return res.status(404).json({ message: 'Користувач не знайдений.' });
             }
             if (user.profilePicture) {
-                const uploadDir = path.join(__dirname, '..', 'uploads');
+                const uploadDir = path.join(__dirname, '..', '..', 'uploads');
                 const filePath = path.join(uploadDir, user.profilePicture.replace('/uploads/', ''));
                 try {
                     await fs.unlink(filePath);

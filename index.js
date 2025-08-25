@@ -1,13 +1,12 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const { url_db } = require('./config')
-const authRouter = require('./authRouter')
+const authRouter = require('./auth/authRouter')
+const newsRouter = require('./news/newsRouter')
 const cors = require('cors')
-
 const PORT = process.env.PORT || 3000
 const app = express()
 const path = require('path');
-
 
 app.use(express.json())
 
@@ -18,7 +17,8 @@ app.use(cors({
     credentials: true,
 }))
 
-app.use('/api/User', authRouter)
+app.use('/api/user', authRouter)
+app.use('/api/news', newsRouter)
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
@@ -30,5 +30,4 @@ const start = async () => {
         console.log(error);
     }
   }
-  console.log(__dirname)
 start()

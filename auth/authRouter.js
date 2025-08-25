@@ -5,11 +5,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const authMiddleware = require('./middlewares/authMiddleware')
-const roleMiddleware = require('./middlewares/roleMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware')
+const roleMiddleware = require('../middlewares/roleMiddleware')
 const controller = require('./authController')    
 
-const uploadDir = path.join(__dirname, '..', 'uploads');
+const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
