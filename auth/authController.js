@@ -35,8 +35,8 @@ const generateAccessAndRefreshToken = (id, firstName, lastName, email, isActivat
         emergencyContact,
         profilePicture
     }
-    const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '30m' })
-    const refreshToken = jwt.sign(payload, jwt_refresh_secret, { expiresIn: '3d' })
+    const accessToken = jwt.sign(payload, jwt_access_secret, { expiresIn: '1d' })
+    const refreshToken = jwt.sign(payload, jwt_refresh_secret, { expiresIn: '7d' })
     return {
         accessToken,
         refreshToken
