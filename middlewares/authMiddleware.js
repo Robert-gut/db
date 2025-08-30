@@ -9,7 +9,12 @@ module.exports = function (req, res, next){
 
   try {
     //получаємо токена
-    const token = req.headers.authorization.split(' ')[1]
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ message: 'Користувач не авторизований' });
+    }
+
+    const token = authHeader.split(' ')[1];
     if (!token) {
       return res.status(401).json({message: 'Користувач не авторизований'})  
     }
@@ -22,6 +27,4 @@ module.exports = function (req, res, next){
     console.log(error);
     return res.status(401).json({message: 'Користувач не авторизований'})
   }
-
-
 }
