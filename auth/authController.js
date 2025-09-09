@@ -338,8 +338,11 @@ class authController {
         const newHashedPassword = await bcrypt.hashSync(newPassword, hash_password)
 
         // 4. Оновлення пароля та збереження
-        user.password = newHashedPassword;
-        await user.save();
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          { password: newHashedPassword },
+          { new: true } // Отримати оновлений документ
+        );
 
         return res.status(200).json({ message: 'Пароль змінено успішно.' });
     } catch (error) {
