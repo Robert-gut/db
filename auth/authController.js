@@ -309,30 +309,45 @@ class authController {
     }
 
     async changePassword(req, res) {
-      try {
-          const { userId, currentPassword, newPassword, confirmNewPassword } = req.body; 
+    try {
+        const { userId, currentPassword, newPassword, confirmNewPassword } = req.body;
 
-          const user = await User.findById(userId)
-          if(!user){
-            return res.status(400).json({message: 'Користувача не знайдено.'})
-          }
+        // 1. Валідація: перевіряємо, чи збігаються нові паролі
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).json({ message: 'Новий пароль та підтвердження не збігаються.' });
+        }
 
-          const validPassword = bcrypt.compareSync(currentPassword, user.password)
-          if (!validPassword) {
-            return res.status(400).json({message: 'Невірний поточний пароль.'})
-          }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(400).json({ message: 'Користувача не знайдено.' });
+        }
+        
+        // 2. Використання асинхронних функцій bcrypt
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Невірний поточний пароль.' });
+        }
+        
+        // Перевіряємо, чи новий пароль не є старим
+        const isSameAsOld = await bcrypt.compare(newPassword, user.password);
+        if (isSameAsOld) {
+            return res.status(400).json({ message: 'Новий пароль не може бути таким же, як поточний.' });
+        }
 
-          const newHashedPassword = bcrypt.hashSync(newPassword, hash_password)
+        // 3. Хешування нового пароля
+        const newHashedPassword = await bcrypt.hashSync(newPassword, hash_password)
 
-          user.password = newHashedPassword
-          await user.save()
+        // 4. Оновлення пароля та збереження
+        user.password = newHashedPassword;
+        await user.save();
 
-          return res.json({message: 'Пароль змінено успішно.'});
-      } catch (error) {
-          console.error(error);
-          return res.status(400).json({ message: 'Change password error' });
-      }
+        return res.status(200).json({ message: 'Пароль змінено успішно.' });
+    } catch (error) {
+        // 5. Повернення більш конкретного повідомлення про помилку
+        console.error(error);
+        return res.status(500).json({ message: 'Помилка сервера. Спробуйте пізніше.' });
     }
+}
 
     async updateProfile(req, res) {
       try {
