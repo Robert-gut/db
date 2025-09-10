@@ -353,32 +353,57 @@ class authController {
 }
 
     async updateProfile(req, res) {
-      try {
+        try {
             const { id, firstName, lastName, email, gender, phone, bio, position, hireDate, employmentType, status, emergencyContact } = req.body; 
             
-            const user = await User.findById(id)
-            if(!user){
-              return res.status(400).json({message: 'Користувача не знайдено.'})
+            // Додаємо логування для діагностики, що саме приходить в req.body
+            console.log('Received data for profile update:', req.body);
+            
+            if (!id) {
+                // Перевірка на id
+                return res.status(400).json({ message: 'Ідентифікатор користувача (id) відсутній.' });
             }
             
-            user.firstName = firstName
-            user.lastName = lastName
-            user.email = email
-            user.gender = gender
-            user.phone = phone
-            user.bio = bio;
-            user.position = position;
-            user.hireDate = hireDate;
-            user.employmentType = employmentType;
-            user.status = status;
-            user.emergencyContact = emergencyContact;
-            
-            await user.save()
+            const user = await User.findById(id);
 
-            return res.json({message: 'Користовач змінено успішно.'});
+            if (!user) {
+                return res.status(404).json({ message: 'Користувача не знайдено.' });
+            }
+            
+            // Якщо поле існує в запиті, оновлюємо його
+            if (firstName) user.firstName = firstName;
+            if (lastName) user.lastName = lastName;
+            if (email) user.email = email;
+            if (gender) user.gender = gender;
+            if (phone) user.phone = phone;
+            if (bio) user.bio = bio;
+            if (position) user.position = position;
+            if (hireDate) user.hireDate = hireDate;
+            if (employmentType) user.employmentType = employmentType;
+            if (status) user.status = status;
+            if (emergencyContact) user.emergencyContact = emergencyContact;
+
+            // Ця перевірка тепер необхідна, якщо ви працюєте з multer
+            if (req.file) {
+                user.avatar = req.file.path;
+            }
+
+            await user.save();
+
+            return res.json({ message: 'Профіль змінено успішно.' });
         } catch (error) {
-            console.error(error);
-            return res.status(400).json({ message: 'Edit profile error' });
+            // Логуємо повний стек помилки
+            console.error('Помилка оновлення профілю:', error);
+            
+            // Повертаємо детальніший меседж в залежності від типу помилки
+            if (error.name === 'ValidationError') {
+                const messages = Object.values(error.errors).map(val => val.message);
+                return res.status(400).json({ message: 'Помилка валідації Mongoose:', details: messages });
+            } else if (error.name === 'CastError') {
+                return res.status(400).json({ message: 'Невірний формат ідентифікатора (ID).' });
+            }
+            
+            return res.status(400).json({ message: 'Помилка оновлення профілю' });
         }
     }
 
